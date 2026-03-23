@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: job_board_db
+    environment:
+      - POSTGRES_DB=job_board
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: job_board_backend
+    volumes:
+      - ./backend:/app
+      - backend_static:/app/staticfiles
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-docker-secret-key-change-this-in-prod
+      - DB_NAME=job_board
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: job_board_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - backend_static:/app/staticfiles:ro
+    restart: always
+
+volumes:
+  backend_static:
+  postgres_data:
